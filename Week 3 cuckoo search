@@ -1,0 +1,118 @@
+
+import random
+
+# Grid size
+SIZE = 6
+
+# Obstacles
+obstacles = [(1, 1), (1, 2), (2, 2), (3, 4), (4, 4)]
+
+start = (0, 0)
+goal = (5, 5)
+
+# Possible movements
+moves = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+
+
+# Generate a valid random path using DFS
+def generate_path():
+    visited = set()
+
+    def dfs(pos, path):
+        if pos == goal:
+            return path
+
+        visited.add(pos)
+
+        directions = moves[:]
+        random.shuffle(directions)
+
+        for dx, dy in directions:
+            new_pos = (pos[0] + dx, pos[1] + dy)
+
+            if (0 <= new_pos[0] < SIZE and
+                0 <= new_pos[1] < SIZE and
+                new_pos not in obstacles and
+                new_pos not in visited):
+
+                result = dfs(new_pos, path + [new_pos])
+
+                if result:
+                    return result
+
+        return None
+
+    return dfs(start, [start])
+
+
+# Fitness function
+def fitness(path):
+    if path is None:
+        return float('inf')
+    return len(path)
+
+
+# Cuckoo Search Algorithm
+def cuckoo_search():
+    population = 10
+    iterations = 50
+    Pa = 0.25
+
+    nests = [generate_path() for _ in range(population)]
+    nests = [p for p in nests if p is not None]
+
+    for i in range(iterations):
+
+        # Generate a new cuckoo path
+        new_path = generate_path()
+
+        if new_path is None:
+            continue
+
+        # Select a random nest
+        j = random.randrange(len(nests))
+
+        # Replace if the new path is better
+        if fitness(new_path) < fitness(nests[j]):
+            nests[j] = new_path
+
+        # Abandon poor nests
+        nests.sort(key=fitness)
+
+        for k in range(len(nests)):
+            if random.random() < Pa:
+                new_path = generate_path()
+                if new_path:
+                    nests[k] = new_path
+
+        nests.sort(key=fitness)
+
+    return nests[0]
+
+
+# Main program
+best_path = cuckoo_search()
+
+print("Robot Path Planning using Cuckoo Search")
+print("Start:", start)
+print("Goal:", goal)
+print("Obstacles:", obstacles)
+print("Best Path:", best_path)
+print("Path Length:", len(best_path) - 1)
+
+# Display grid
+for i in range(SIZE):
+    for j in range(SIZE):
+        pos = (i, j)
+
+        if pos == start:
+            print("S", end=" ")
+        elif pos == goal:
+            print("G", end=" ")
+        elif pos in obstacles:
+            print("#", end=" ")
+        elif pos in best_path:
+            print("*", end=" ")
+        else:
+            print(".", end=" ")
+    print()
