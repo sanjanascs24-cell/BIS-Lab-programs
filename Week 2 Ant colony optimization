@@ -1,0 +1,98 @@
+import random
+
+# Distance matrix
+distance = [
+    [0, 10, 15, 20, 25],
+    [10, 0, 35, 25, 30],
+    [15, 35, 0, 30, 20],
+    [20, 25, 30, 0, 15],
+    [25, 30, 20, 15, 0]
+]
+
+# Parameters
+n = len(distance)
+ants = 10
+iterations = 100
+alpha = 1
+beta = 2
+rho = 0.5
+Q = 100
+
+# Initialize pheromone matrix
+pheromone = [[1.0 for j in range(n)] for i in range(n)]
+
+best_path = None
+best_distance = float('inf')
+
+# ACO algorithm
+for iteration in range(iterations):
+
+    for ant in range(ants):
+
+        # Random starting city
+        start = random.randint(0, n - 1)
+        path = [start]
+        unvisited = list(range(n))
+        unvisited.remove(start)
+
+        # Construct tour
+        while unvisited:
+
+            current = path[-1]
+            probabilities = []
+
+            for city in unvisited:
+                p = (pheromone[current][city] ** alpha) * \
+                    ((1 / distance[current][city]) ** beta)
+
+                probabilities.append(p)
+
+            total = sum(probabilities)
+            probabilities = [p / total for p in probabilities]
+
+            next_city = random.choices(
+                unvisited, weights=probabilities
+            )[0]
+
+            path.append(next_city)
+            unvisited.remove(next_city)
+
+        # Return to starting city
+        path.append(start)
+
+        # Calculate total distance
+        total_distance = 0
+
+        for i in range(len(path) - 1):
+            total_distance += distance[path[i]][path[i + 1]]
+
+        # Update best solution
+        if total_distance < best_distance:
+            best_distance = total_distance
+            best_path = path.copy()
+
+        # Store ant solution
+        if ant == 0:
+            all_paths = []
+            all_distances = []
+
+        all_paths.append(path)
+        all_distances.append(total_distance)
+
+    # Pheromone evaporation
+    for i in range(n):
+        for j in range(n):
+            pheromone[i][j] *= (1 - rho)
+
+    # Pheromone deposition
+    for path, dist in zip(all_paths, all_distances):
+        for i in range(len(path) - 1):
+            a = path[i]
+            b = path[i + 1]
+
+            pheromone[a][b] += Q / dist
+            pheromone[b][a] += Q / dist
+
+# Display results
+print("Best Path:", best_path)
+print("Minimum Distance:", best_distance)
