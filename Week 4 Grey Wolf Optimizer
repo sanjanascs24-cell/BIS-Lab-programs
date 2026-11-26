@@ -1,0 +1,55 @@
+
+import random
+
+# Total number of features
+features = 6
+
+# Fitness function
+def fitness(wolf):
+    selected = sum(wolf)
+
+    if selected == 0:
+        return 100
+
+    # We want to select 3 useful features
+    return abs(selected - 3)
+
+# Initialize wolves
+n = 5
+wolves = []
+
+for i in range(n):
+    wolf = [random.randint(0, 1) for j in range(features)]
+    wolves.append(wolf)
+
+# Grey Wolf Optimizer
+for iteration in range(20):
+
+    wolves.sort(key=fitness)
+
+    alpha = wolves[0]
+    beta = wolves[1]
+    delta = wolves[2]
+
+    new_wolves = []
+
+    for wolf in wolves:
+        new_wolf = []
+
+        for j in range(features):
+            value = (alpha[j] + beta[j] + delta[j]) / 3
+
+            if random.random() < value:
+                new_wolf.append(1)
+            else:
+                new_wolf.append(0)
+
+        new_wolves.append(new_wolf)
+
+    wolves = new_wolves
+
+# Best feature selection
+best = min(wolves, key=fitness)
+
+print("Selected Features:", best)
+print("Number of Selected Features:", sum(best))
