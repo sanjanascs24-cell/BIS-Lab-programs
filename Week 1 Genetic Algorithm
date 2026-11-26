@@ -1,0 +1,96 @@
+
+import random
+
+# City coordinates
+cities = {
+    'A': (0, 0),
+    'B': (2, 5),
+    'C': (5, 2),
+    'D': (6, 6),
+    'E': (8, 3)
+}
+
+# Calculate distance
+def distance(city1, city2):
+    x1, y1 = cities[city1]
+    x2, y2 = cities[city2]
+
+    return ((x2-x1)**2 + (y2-y1)**2)**0.5
+
+# Calculate total route distance
+def total_distance(route):
+    total = 0
+
+    for i in range(len(route)):
+        city1 = route[i]
+        city2 = route[(i+1) % len(route)]
+
+        total += distance(city1, city2)
+
+    return total
+
+# Parameters
+population_size = 50
+generations = 100
+mutation_rate = 0.1
+
+city_list = list(cities.keys())
+
+# Generate initial population
+population = []
+
+for i in range(population_size):
+    route = city_list[:]
+    random.shuffle(route)
+    population.append(route)
+
+# Genetic Algorithm
+for gen in range(generations):
+
+    # Sort routes based on distance
+    population.sort(key=total_distance)
+
+    # Elitism: preserve best route
+    new_population = [population[0][:]]
+
+    while len(new_population) < population_size:
+
+        # Selection
+        parent1 = random.choice(population[:25])
+        parent2 = random.choice(population[:25])
+
+        # Crossover (Order Crossover)
+        start = random.randint(0, len(city_list)-2)
+        end = random.randint(start+1, len(city_list)-1)
+
+        child = [None] * len(city_list)
+
+        child[start:end+1] = parent1[start:end+1]
+
+        remaining = [
+            city for city in parent2
+            if city not in child
+        ]
+
+        j = 0
+
+        for i in range(len(child)):
+            if child[i] is None:
+                child[i] = remaining[j]
+                j += 1
+
+        # Mutation
+        if random.random() < mutation_rate:
+            i, j = random.sample(range(len(child)), 2)
+            child[i], child[j] = child[j], child[i]
+
+        new_population.append(child)
+
+    population = new_population
+
+# Best route
+best_route = min(population, key=total_distance)
+
+print("GENETIC ALGORITHM - TSP")
+print("Best Route:", " -> ".join(best_route + [best_route[0]]))
+print("Shortest Distance:", round(total_distance(best_route), 2))
