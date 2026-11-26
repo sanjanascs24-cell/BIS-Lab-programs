@@ -1,0 +1,102 @@
+import random
+
+# Customer locations
+customers = [
+    (2, 3),
+    (5, 8),
+    (8, 2),
+    (6, 6),
+    (3, 7)
+]
+
+# Objective function
+def fitness(position):
+    x, y = position
+    total = 0
+
+    for cx, cy in customers:
+        d = ((x-cx)**2 + (y-cy)**2)**0.5
+        total += d
+
+    return total
+
+# PSO parameters
+particles = 30
+iterations = 100
+
+w = 0.7
+c1 = 1.5
+c2 = 1.5
+
+# Initialize particle positions
+positions = [
+    [random.uniform(0, 10),
+     random.uniform(0, 10)]
+    for i in range(particles)
+]
+
+# Initialize velocities
+velocities = [
+    [random.uniform(-1, 1),
+     random.uniform(-1, 1)]
+    for i in range(particles)
+]
+
+# Personal best
+pbest = [p[:] for p in positions]
+pbest_value = [fitness(p) for p in positions]
+
+# Global best
+index = pbest_value.index(min(pbest_value))
+
+gbest = pbest[index][:]
+gbest_value = pbest_value[index]
+
+# Particle Swarm Optimization
+for iteration in range(iterations):
+
+    for i in range(particles):
+
+        for d in range(2):
+
+            r1 = random.random()
+            r2 = random.random()
+
+            # Update velocity
+            velocities[i][d] = (
+                w * velocities[i][d]
+                + c1 * r1 * (pbest[i][d] - positions[i][d])
+                + c2 * r2 * (gbest[d] - positions[i][d])
+            )
+
+            # Update position
+            positions[i][d] += velocities[i][d]
+
+            # Boundary checking
+            positions[i][d] = max(
+                0, min(10, positions[i][d])
+            )
+
+        # Evaluate fitness
+        value = fitness(positions[i])
+
+        # Update personal best
+        if value < pbest_value[i]:
+            pbest_value[i] = value
+            pbest[i] = positions[i][:]
+
+    # Update global best
+    index = pbest_value.index(min(pbest_value))
+
+    if pbest_value[index] < gbest_value:
+        gbest_value = pbest_value[index]
+        gbest = pbest[index][:]
+
+# Display result
+print("PARTICLE SWARM OPTIMIZATION")
+print("Best Warehouse Location:")
+print("X Coordinate:", round(gbest[0], 2))
+print("Y Coordinate:", round(gbest[1], 2))
+
+print("Minimum Total Distance:",
+      round(gbest_value, 2))
