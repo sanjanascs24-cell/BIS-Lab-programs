@@ -1,0 +1,131 @@
+import random
+
+# Training data: humidity, wind speed, temperature
+data = [
+    (30, 5, 32),
+    (40, 8, 30),
+    (50, 10, 28),
+    (60, 12, 26),
+    (70, 15, 24),
+    (80, 18, 22),
+    (90, 20, 20)
+]
+
+# GEP parameters
+POP_SIZE = 20
+GENERATIONS = 50
+HEAD = 5
+
+functions = ['+', '-', '*', '/']
+terminals = ['h', 'w', '1', '2', '5']
+
+# Generate chromosome
+def create_chromosome():
+    return (
+        [random.choice(functions + terminals)
+         for _ in range(HEAD)] +
+        [random.choice(terminals)
+         for _ in range(HEAD + 1)]
+    )
+
+# Evaluate chromosome
+def evaluate(chromosome, h, w):
+
+    stack = []
+
+    for gene in reversed(chromosome):
+
+        if gene == 'h':
+            stack.append(h)
+        elif gene == 'w':
+            stack.append(w)
+        elif gene in ['1', '2', '5']:
+            stack.append(float(gene))
+
+        else:
+            if len(stack) < 2:
+                continue
+
+            a = stack.pop()
+            b = stack.pop()
+
+            if gene == '+':
+                result = a + b
+            elif gene == '-':
+                result = a - b
+            elif gene == '*':
+                result = a * b
+            else:
+                result = a / b if abs(b) > 0.000001 else 1
+
+            stack.append(result)
+
+    return stack[-1] if stack else 0
+
+# Fitness function
+def fitness(chromosome):
+
+    error = 0
+
+    for h, w, actual in data:
+        predicted = evaluate(chromosome, h, w)
+        error += (predicted - actual) ** 2
+
+    return error / len(data)
+
+# Mutation
+def mutate(chromosome):
+
+    child = chromosome.copy()
+    index = random.randint(0, len(child) - 1)
+
+    if index < HEAD:
+        child[index] = random.choice(functions + terminals)
+    else:
+        child[index] = random.choice(terminals)
+
+    return child
+
+# Initialize population
+population = [
+    create_chromosome() for _ in range(POP_SIZE)
+]
+
+# Evolution process
+for generation in range(GENERATIONS):
+
+    population.sort(key=fitness)
+
+    best = population[0]
+
+    print("Generation:", generation + 1,
+          "Error:", round(fitness(best), 2))
+
+    new_population = [best.copy()]
+
+    while len(new_population) < POP_SIZE:
+
+        parent = random.choice(population[:10])
+        child = mutate(parent)
+
+        new_population.append(child)
+
+    population = new_population
+
+# Best chromosome
+population.sort(key=fitness)
+best = population[0]
+
+print("\nBest Chromosome:", best)
+print("Best Fitness:", round(fitness(best), 2))
+
+# Predict temperature
+humidity = 55
+wind_speed = 10
+
+temperature = evaluate(best, humidity, wind_speed)
+
+print("\nWeather Prediction")
+print("Humidity:", humidity, "%")
+print("Wind Speed:", wind_speed, "km/h")
+print("Predicted Temperature:", round(temperature, 2), "°C")
